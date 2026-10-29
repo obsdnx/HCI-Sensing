@@ -1,25 +1,34 @@
 # HCI-Sensing
 
-IMU sensing unit — Raspberry Pi Pico + IMU sensor, Imperial coursework project.
+IMU sensing unit — ESP32 + LSM6DS3, Imperial coursework project.
 
 ## Hardware
 
 | Part | Notes |
 |------|-------|
-| Raspberry Pi Pico | RP2040, MicroPython firmware |
-| IMU | Default: MPU-6050 (I2C addr `0x68`). Swap driver for BNO055/LSM6DS3/ICM-42688 etc. |
-| Wiring | SDA → GP4, SCL → GP5 (3.3 V logic, no level shifter needed) |
+| ESP32 | MicroPython firmware |
+| IMU | LSM6DS3 breakout (DollaTek), I2C addr `0x6A` |
+
+## Wiring (I2C)
+
+| LSM6DS3 pin | ESP32 pin |
+|-------------|-----------|
+| 3V3 | 3V3 |
+| GND | GND |
+| SCL | GPIO 22 |
+| SDA | GPIO 21 |
+
+Only 4 wires needed. Leave CD and SAO unconnected.
 
 ## Project layout
 
 ```
 src/
-  main.py              # Pico entry point — runs on-device
+  main.py              # ESP32 entry point — runs on-device
   drivers/
-    imu.py             # IMU register driver (MPU-6050 default)
+    imu.py             # LSM6DS3 I2C driver
   utils/
     serial_out.py      # Streams CSV over USB serial
-lib/                   # Third-party .mpy libs (drop here, copy to Pico)
 tools/
   capture.py           # Host: record serial stream → CSV
   plot.py              # Host: plot a captured CSV
@@ -28,41 +37,48 @@ data/                  # Captured sessions (gitignored)
 
 ## Quickstart
 
-### 1 — Flash MicroPython onto the Pico
+### 1 — Flash MicroPython onto the ESP32
 
-Download the latest `.uf2` from https://micropython.org/download/RPI_PICO/ and drag it onto the Pico in BOOTSEL mode.
+```bash
+pip install esptool
 
-### 2 — Copy firmware to the Pico
+# Erase first
+esptool.py --port /dev/tty.SLAB_USBtoUART erase_flash
 
-Use `mpremote` or Thonny to copy:
+# Flash — download .bin from https://micropython.org/download/ESP32_GENERIC/
+esptool.py --chip esp32 --port /dev/tty.SLAB_USBtoUART write_flash -z 0x1000 ESP32_GENERIC-*.bin
+```
+
+Find your port: `ls /dev/tty.*` after plugging in.
+
+### 2 — Copy firmware to the ESP32
 
 ```bash
 pip install mpremote
+mpremote connect auto mkdir drivers
+mpremote connect auto mkdir utils
 mpremote connect auto cp src/main.py :main.py
 mpremote connect auto cp src/drivers/imu.py :drivers/imu.py
 mpremote connect auto cp src/utils/serial_out.py :utils/serial_out.py
 ```
 
-Or use Thonny's file manager.
+### 3 — Verify IMU is detected
 
-### 3 — Capture data on the host
+```bash
+mpremote connect auto exec "from machine import I2C, Pin; i2c = I2C(0, sda=Pin(21), scl=Pin(22)); print([hex(d) for d in i2c.scan()])"
+```
+
+Should print `['0x6a']`.
+
+### 4 — Capture data
 
 ```bash
 pip install -r requirements.txt
-python tools/capture.py --port /dev/tty.usbmodem1101 --out data/test.csv
+python tools/capture.py --port /dev/tty.SLAB_USBtoUART --out data/test.csv
 ```
 
-Find your port: `ls /dev/tty.usbmodem*` (macOS) or `ls /dev/ttyACM*` (Linux).
-
-### 4 — Plot a session
+### 5 — Plot
 
 ```bash
 python tools/plot.py data/test.csv
 ```
-
-## Swapping the IMU chip
-
-Edit `src/drivers/imu.py`:
-- Change `_DEFAULT_ADDR` to your chip's I2C address
-- Update the register constants and `_ACCEL_SCALE` / `_GYRO_SCALE` for your chip's datasheet
-- The `IMU.read()` return dict keys (`ax/ay/az/gx/gy/gz`) stay the same so nothing else breaks

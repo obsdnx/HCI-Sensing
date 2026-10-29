@@ -1,5 +1,5 @@
 """
-HCI-Sensing — Raspberry Pi Pico entry point
+HCI-Sensing — ESP32 entry point
 Reads IMU data over I2C and streams it via USB serial.
 """
 import time
@@ -7,10 +7,10 @@ from machine import I2C, Pin
 from drivers.imu import IMU
 from utils.serial_out import SerialOut
 
-# I2C pins — adjust if your wiring differs
+# ESP32 default I2C pins
 I2C_BUS = 0
-SDA_PIN = 4
-SCL_PIN = 5
+SDA_PIN = 21
+SCL_PIN = 22
 SAMPLE_RATE_HZ = 100
 
 def main():
