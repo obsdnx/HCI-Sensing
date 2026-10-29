@@ -1,0 +1,15 @@
+# Python host tools
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Captured data (commit only intentionally)
+data/*.csv
+data/*.png
+
+# MicroPython build artefacts
+*.mpy
+
+# macOS
+.DS_Store
