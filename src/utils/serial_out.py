@@ -1,8 +1,4 @@
-"""
-Serialises IMU samples to USB serial as CSV lines.
-Format: ax,ay,az,gx,gy,gz
-Host tools parse this format.
-"""
+"""CSV over USB serial. Format: t_ms,ax,ay,az,gx,gy,gz,roll,pitch,yaw"""
 import time
 
 
@@ -12,9 +8,9 @@ class SerialOut:
 
     def send(self, sample: dict):
         t = time.ticks_diff(time.ticks_ms(), self._t0)
-        line = "{},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f}".format(
+        print("{},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.2f},{:.2f},{:.2f}".format(
             t,
             sample["ax"], sample["ay"], sample["az"],
             sample["gx"], sample["gy"], sample["gz"],
-        )
-        print(line)
+            sample.get("roll", 0), sample.get("pitch", 0), sample.get("yaw", 0),
+        ))

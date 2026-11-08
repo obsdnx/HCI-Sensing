@@ -1,34 +1,44 @@
 """
-HCI-Sensing — ESP32 entry point
-Reads IMU data over I2C and streams it via USB serial.
+HCI-Sensing — ESP32 entry point.
+Set MODE in config.py: 'serial' | 'wifi' | 'ble' | 'sd'
 """
 import time
 from machine import I2C, Pin
+import config
 from drivers.imu import IMU
-from utils.serial_out import SerialOut
+from filters.madgwick import MadgwickAHRS
 
-# ESP32 default I2C pins
-I2C_BUS = 0
-SDA_PIN = 21
-SCL_PIN = 22
-SAMPLE_RATE_HZ = 100
+if config.MODE == 'wifi':
+    from utils.wifi_stream import WiFiStream
+    out = WiFiStream(config.WIFI_SSID, config.WIFI_PASSWORD,
+                     config.HOST_IP, config.UDP_PORT)
+elif config.MODE == 'ble':
+    from utils.ble_hid import BleHID
+    out = BleHID()
+elif config.MODE == 'sd':
+    from utils.sd_logger import SDLogger
+    out = SDLogger()
+else:
+    from utils.serial_out import SerialOut
+    out = SerialOut()
 
 def main():
-    i2c = I2C(I2C_BUS, sda=Pin(SDA_PIN), scl=Pin(SCL_PIN), freq=400_000)
-
-    # Scan so you can confirm the IMU address on first boot
-    devices = i2c.scan()
-    print(f"I2C devices found: {[hex(d) for d in devices]}")
+    i2c = I2C(config.I2C_BUS, sda=Pin(config.SDA_PIN),
+              scl=Pin(config.SCL_PIN), freq=400_000)
+    print(f"I2C devices: {[hex(d) for d in i2c.scan()]}")
 
     imu = IMU(i2c)
     imu.init()
 
-    out = SerialOut()
-    interval = 1.0 / SAMPLE_RATE_HZ
+    ahrs = MadgwickAHRS(beta=0.1, sample_period=1.0 / config.SAMPLE_RATE_HZ)
+    interval = 1.0 / config.SAMPLE_RATE_HZ
 
     print("START")
     while True:
         sample = imu.read()
+        ahrs.update(sample['gx'], sample['gy'], sample['gz'],
+                    sample['ax'], sample['ay'], sample['az'])
+        sample['roll'], sample['pitch'], sample['yaw'] = ahrs.euler()
         out.send(sample)
         time.sleep(interval)
 
