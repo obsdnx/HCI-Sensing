@@ -3,8 +3,8 @@ MODE = 'serial'
 
 # I2C
 I2C_BUS   = 0
-SDA_PIN   = 21
-SCL_PIN   = 22
+SDA_PIN   = 18
+SCL_PIN   = 5
 
 # Sample rate
 SAMPLE_RATE_HZ = 100
