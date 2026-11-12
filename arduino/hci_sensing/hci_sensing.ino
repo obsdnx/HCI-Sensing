@@ -2,7 +2,7 @@
 
 #define SDA_PIN   18
 #define SCL_PIN    5
-#define LSM_ADDR  0x6A
+#define LSM_ADDR  0x6B
 
 #define REG_WHO_AM_I  0x0F
 #define REG_CTRL1_XL  0x10   // accel config
