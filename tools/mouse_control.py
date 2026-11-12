@@ -23,7 +23,7 @@ try:
 except ImportError:
     sys.exit("pip install pyautogui pyserial")
 
-pyautogui.FAILSAFE = True
+pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0
 
 # ── Madgwick filter ───────────────────────────────────────────────────────────
@@ -66,9 +66,9 @@ class Madgwick:
 
 # ── Tuning ────────────────────────────────────────────────────────────────────
 
-DEAD_ZONE    = 4.0    # degrees — ignore tiny tilts
-SENSITIVITY  = 1.8    # pixels moved per degree beyond dead zone per tick
-MAX_SPEED    = 40     # pixels per tick cap
+DEAD_ZONE    = 5.0    # degrees — ignore tiny tilts
+SENSITIVITY  = 1.2    # pixels moved per degree beyond dead zone per tick
+MAX_SPEED    = 25     # pixels per tick cap
 TAP_THRESH   = 2.2    # g — tap detection threshold
 TAP_COOLDOWN = 0.5    # seconds between clicks
 
@@ -121,9 +121,10 @@ def main():
     t.start()
 
     print("IMU mouse control running.")
-    print("Tilt to move  |  Tap to click  |  Move mouse to top-left corner to stop\n")
+    print("Tilt to move  |  Tap to click  |  Ctrl+C to stop\n")
 
-    while True:
+    try:
+     while True:
         if _tap_flag.is_set():
             _tap_flag.clear()
             pyautogui.click()
@@ -144,6 +145,8 @@ def main():
                 pyautogui.move(int(dx), int(dy))
 
         time.sleep(0.01)
+    except KeyboardInterrupt:
+        print("\nStopped.")
 
 
 if __name__ == "__main__":
