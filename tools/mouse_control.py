@@ -151,6 +151,7 @@ def main():
                 _tap_flag.clear()
                 pyautogui.click()
                 print("click")
+                break
 
             if _latest:
                 ax, ay, az, gx, gy, gz = _latest[-1]
