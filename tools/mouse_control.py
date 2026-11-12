@@ -31,7 +31,7 @@ SENSITIVITY   = 0.9    # pixels per degree per tick
 MAX_SPEED     = 20     # pixels per tick cap
 TAP_THRESH    = 2.8    # g magnitude for tap (higher = less sensitive)
 TAP_COOLDOWN  = 0.8    # seconds between clicks
-CALIB_SAMPLES = 150    # samples collected during calibration (~1.5s at 100Hz)
+CALIB_SAMPLES = 50     # samples collected during calibration (~0.5s at 100Hz)
 
 # ── Madgwick ──────────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ def main():
         if _latest:
             ax, ay, az, gx, gy, gz = _latest[-1]
             filt.update(gx, gy, gz, ax, ay, az)
-            if len(calib_buf) > 20:   # skip first 20 to let filter settle
+            if len(calib_buf) > 5:    # skip first 5 to let filter settle
                 calib_buf.append(filt.euler())
         time.sleep(0.01)
 
