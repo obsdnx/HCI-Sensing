@@ -17,7 +17,7 @@ try:
 except ImportError:
     sys.exit("Install pyserial: pip install pyserial")
 
-COLS = ["t_ms", "ax", "ay", "az", "gx", "gy", "gz"]
+COLS = ["t_ms", "ax", "ay", "az", "gx", "gy", "gz", "roll", "pitch", "tap"]
 
 
 def main():
@@ -50,7 +50,7 @@ def main():
                 continue
 
             parts = line.split(",")
-            if len(parts) == 7:
+            if len(parts) == 10:
                 writer.writerow(parts)
                 f.flush()
                 print(line)
