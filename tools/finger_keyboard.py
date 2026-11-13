@@ -106,9 +106,14 @@ def main():
     flash_key   = None
     flash_until = 0.0
 
+    # Force window to front on macOS
+    cv2.namedWindow("Finger Keyboard  —  pinch to type  |  Q to quit", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("Finger Keyboard  —  pinch to type  |  Q to quit", 800, 600)
+
     while True:
         ok, frame = cap.read()
         if not ok:
+            print("Camera read failed")
             break
 
         frame = cv2.flip(frame, 1)
