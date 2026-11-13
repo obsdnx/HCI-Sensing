@@ -5,14 +5,15 @@ Reads serial CSV stream, uses pitch/roll for cursor, accel spike for tap.
 Usage:
     python tools/air_keyboard.py --port /dev/tty.usbserial-110
 """
-import argparse
 import math
 import threading
 import time
 import tkinter as tk
+from tkinter import ttk
 
 try:
     import serial
+    import serial.tools.list_ports
 except ImportError:
     import sys; sys.exit("pip install pyserial")
 
@@ -170,12 +171,62 @@ class AirKeyboard:
         self._root.mainloop()
 
 
+def pick_port():
+    """Show a port-picker dialog, return (port, baud) or exit."""
+    ports = [p.device for p in serial.tools.list_ports.comports()]
+
+    win = tk.Tk()
+    win.title("Air Keyboard — Connect")
+    win.configure(bg="#1e1e1e")
+    win.resizable(False, False)
+
+    tk.Label(win, text="Serial port", bg="#1e1e1e", fg="white",
+             font=("Helvetica", 12)).pack(padx=20, pady=(16, 4))
+
+    port_var = tk.StringVar(value=ports[0] if ports else "")
+    port_menu = ttk.Combobox(win, textvariable=port_var, values=ports, width=30, state="readonly")
+    port_menu.pack(padx=20, pady=4)
+
+    tk.Label(win, text="Baud rate", bg="#1e1e1e", fg="white",
+             font=("Helvetica", 12)).pack(padx=20, pady=(10, 4))
+
+    baud_var = tk.StringVar(value="460800")
+    baud_menu = ttk.Combobox(win, textvariable=baud_var,
+                              values=["115200", "460800", "921600"], width=30, state="readonly")
+    baud_menu.pack(padx=20, pady=4)
+
+    result = {}
+
+    def start():
+        result["port"] = port_var.get()
+        result["baud"] = int(baud_var.get())
+        win.destroy()
+
+    tk.Button(win, text="Start", command=start, bg="#0066aa", fg="white",
+              font=("Helvetica", 12, "bold"), relief="flat",
+              padx=20, pady=6).pack(pady=16)
+
+    win.mainloop()
+
+    if not result:
+        raise SystemExit(0)
+    return result["port"], result["baud"]
+
+
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--port", required=True, help="e.g. /dev/tty.usbserial-110")
-    p.add_argument("--baud", type=int, default=115200)
-    args = p.parse_args()
-    AirKeyboard(args.port, args.baud).run()
+    import sys
+    # Allow --port flag for command line use; otherwise show picker
+    if "--port" in sys.argv:
+        import argparse
+        p = argparse.ArgumentParser()
+        p.add_argument("--port", required=True)
+        p.add_argument("--baud", type=int, default=460800)
+        args = p.parse_args()
+        port, baud = args.port, args.baud
+    else:
+        port, baud = pick_port()
+
+    AirKeyboard(port, baud).run()
 
 
 if __name__ == "__main__":

@@ -13,3 +13,6 @@ data/*.png
 
 # macOS
 .DS_Store
+build/
+dist/
+*.spec
